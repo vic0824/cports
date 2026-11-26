@@ -33,16 +33,40 @@ def path(sub=""):
     return f"{_prefix}/{sub}" if sub else prefix()
 
 
+# Directories of package-provided defaults that would otherwise sit in
+# /usr/lib with overrides in /etc. With no /usr there is a single location
+# for each of them, in /etc, so there is no default/override cascade.
+ETC_DIRS = (
+    "binfmt.d",
+    "dinit.d",
+    "modprobe.d",
+    "modules-load.d",
+    "sysctl.d",
+    "sysusers.d",
+    "tmpfiles.d",
+)
+
+
+def _rel(s):
+    if s == "usr":
+        return "."
+    if not s.startswith("usr/"):
+        return s
+    s = s[4:]
+    if s.startswith("lib/"):
+        d, sep, rest = s[4:].partition("/")
+        if d in ETC_DIRS:
+            return f"etc/{d}{sep}{rest}"
+    return s
+
+
 def rel(p):
     """Translate a destdir-relative path written for the /usr layout."""
     if not merged():
         return p
-    s = os.fspath(p)
-    if s == "usr":
-        return type(p)(".") if isinstance(p, pathlib.PurePath) else "."
-    if s.startswith("usr/"):
-        return type(p)(s[4:]) if isinstance(p, pathlib.PurePath) else s[4:]
-    return p
+    if isinstance(p, pathlib.PurePath):
+        return type(p)(_rel(os.fspath(p)))
+    return _rel(p)
 
 
 class DestPath(pathlib.PosixPath):

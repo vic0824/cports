@@ -153,6 +153,16 @@ def _lint_devel(pkg):
         break
 
 
+def _has_etcfiles(pkg):
+    etc = pkg.destdir / "etc"
+    if not etc.exists():
+        return False
+    if not layout.merged():
+        return True
+    # with no /usr, package defaults in these directories live in /etc
+    return any(f.name not in layout.ETC_DIRS for f in etc.iterdir())
+
+
 def invoke(pkg):
     _lint_devel(pkg)
     _lint_license(pkg)
@@ -243,7 +253,7 @@ def invoke(pkg):
         )
         lintfail = True
 
-    if not pkg.options["etcfiles"] and (pkg.destdir / "etc").exists():
+    if not pkg.options["etcfiles"] and _has_etcfiles(pkg):
         pkg.log_red(
             "'/etc' exists, verify if this is necessary and then set the 'etcfiles' option"
         )
@@ -278,6 +288,9 @@ def invoke(pkg):
         "ufw/applications.d",
     ]:
         if d == "modprobe.d" and pkg.pkgname == "kmod":
+            continue
+        # with no /usr these have a single location, in /etc
+        if layout.merged() and d in layout.ETC_DIRS:
             continue
         if (pkg.destdir / "etc" / d).exists():
             if d == "dinit.d":
