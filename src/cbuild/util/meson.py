@@ -1,3 +1,6 @@
+from cbuild.core import layout
+
+
 def _make_crossfile(pkg, build_dir):
     if not pkg.profile.cross:
         return
@@ -81,15 +84,15 @@ def configure(pkg, build_dir, meson_dir=None, extra_args=None, env=None):
     pkg.do(
         "meson",
         "setup",
-        "--prefix=/usr",
-        "--libdir=/usr/lib",
-        "--libexecdir=/usr/lib",
-        "--bindir=/usr/bin",
-        "--sbindir=/usr/bin",
-        "--includedir=/usr/include",
-        "--datadir=/usr/share",
-        "--mandir=/usr/share/man",
-        "--infodir=/usr/share/info",
+        "--prefix=" + layout.prefix(),
+        "--libdir=" + layout.path("lib"),
+        "--libexecdir=" + layout.path("lib"),
+        "--bindir=" + layout.path("bin"),
+        "--sbindir=" + layout.path("bin"),
+        "--includedir=" + layout.path("include"),
+        "--datadir=" + layout.path("share"),
+        "--mandir=" + layout.path("share/man"),
+        "--infodir=" + layout.path("share/info"),
         "--sysconfdir=/etc",
         "--localstatedir=/var",
         "--sharedstatedir=/var/lib",

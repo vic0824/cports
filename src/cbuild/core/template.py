@@ -21,6 +21,7 @@ import stat
 import subprocess
 
 from cbuild.core import logger, chroot, paths, profile, spdx, errors, git
+from cbuild.core import layout
 from cbuild.util import compiler, flock
 from cbuild.apk import cli, util as autil
 
@@ -1232,7 +1233,7 @@ class Template(Package):
         if self.profile.cross:
             self.destdir_base = self.destdir_base / self.profile.arch
 
-        self.destdir = self.destdir_base / self.pkgname
+        self.destdir = layout.DestPath(self.destdir_base / self.pkgname)
 
         self.srcdir = self.statedir / "wrksrc"
         self.cwd = self.srcdir / self.build_wrksrc
@@ -1260,7 +1261,9 @@ class Template(Package):
                     self.chroot_destdir_base / self.profile.arch
                 )
 
-        self.chroot_destdir = self.chroot_destdir_base / self.pkgname
+        self.chroot_destdir = layout.DestPath(
+            self.chroot_destdir_base / self.pkgname
+        )
 
         # now do it for all known subpackages
         for sp in self.subpkg_list:
@@ -2691,8 +2694,10 @@ class Subpackage(Package):
         parent = self.parent.rparent
 
         self.statedir = parent.statedir
-        self.destdir = parent.destdir_base / self.pkgname
-        self.chroot_destdir = parent.chroot_destdir_base / self.pkgname
+        self.destdir = layout.DestPath(parent.destdir_base / self.pkgname)
+        self.chroot_destdir = layout.DestPath(
+            parent.chroot_destdir_base / self.pkgname
+        )
 
     def _take_impl(self, p, missing_ok, func=None):
         p = pathlib.Path(p)

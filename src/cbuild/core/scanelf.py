@@ -2,7 +2,7 @@ import struct
 import mmap
 import stat
 
-from cbuild.core import paths
+from cbuild.core import layout, paths
 
 _tsizes = "_BH_I___Q"
 
@@ -305,7 +305,15 @@ def scan(pkg, somap):
                 elf_foreign.append(fpath)
         # deny files in bad paths
         fparts = fpath.parts
-        if fparts[0] != "usr" or fparts[1] == "include" or fparts[1] == "share":
+        if layout.merged():
+            badpath = fparts[0] not in ("bin", "lib")
+        else:
+            badpath = (
+                fparts[0] != "usr"
+                or fparts[1] == "include"
+                or fparts[1] == "share"
+            )
+        if badpath:
             # we permit this for e.g. rpi firmware for now
             if fparts[0] != "boot":
                 elf_badpath.append(fpath)

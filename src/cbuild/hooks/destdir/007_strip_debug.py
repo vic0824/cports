@@ -1,3 +1,4 @@
+from cbuild.core import layout
 from cbuild.util import strip
 
 import shutil
@@ -145,7 +146,7 @@ def invoke(pkg):
     if not (pkg.destdir / "usr/lib/debug").is_dir():
         return
 
-    ddest = pkg.rparent.destdir_base / f"{pkg.pkgname}-dbg"
+    ddest = layout.DestPath(pkg.rparent.destdir_base / f"{pkg.pkgname}-dbg")
     (ddest / "usr/lib").mkdir(parents=True, exist_ok=True)
 
     # move debug symbols

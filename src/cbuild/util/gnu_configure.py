@@ -1,4 +1,4 @@
-from cbuild.core import logger, paths
+from cbuild.core import layout, logger, paths
 from cbuild.util import make
 
 import shutil
@@ -81,14 +81,16 @@ def configure(
     (pkg.cwd / build_dir).mkdir(parents=True, exist_ok=True)
 
     cargs = [
-        "--prefix=/usr",
+        "--prefix=" + layout.prefix(),
         "--sysconfdir=/etc",
-        "--sbindir=/usr/bin",
-        "--bindir=/usr/bin",
-        "--libdir=/usr/lib",
-        "--libexecdir=/usr/lib",
-        "--mandir=/usr/share/man",
-        "--infodir=/usr/share/info",
+        "--sbindir=" + layout.path("bin"),
+        "--bindir=" + layout.path("bin"),
+        "--libdir=" + layout.path("lib"),
+        "--libexecdir=" + layout.path("lib"),
+        "--includedir=" + layout.path("include"),
+        "--datarootdir=" + layout.path("share"),
+        "--mandir=" + layout.path("share/man"),
+        "--infodir=" + layout.path("share/info"),
         "--localstatedir=/var",
     ]
 

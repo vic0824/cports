@@ -27,7 +27,7 @@ shift
 set -e
 
 SFILE="${DESTDIR}/$1"
-DFILE="${DESTDIR}/usr/lib/debug/$1"
+DFILE="${DESTDIR}${CBUILD_DEBUG_DIR:-/usr/lib/debug}/$1"
 DPATH=$(dirname "$DFILE")
 
 if [ -n "$DO_SPLIT" ]; then

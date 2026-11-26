@@ -1,4 +1,24 @@
-from cbuild.core import paths
+from cbuild.core import layout, paths
+
+
+def _install_dirs():
+    if not layout.merged():
+        return [
+            "-DCMAKE_INSTALL_LIBDIR=lib",
+            "-DCMAKE_INSTALL_LIBEXECDIR=lib",
+            "-DCMAKE_INSTALL_SBINDIR=bin",
+            "-DCMAKE_INSTALL_BINDIR=bin",
+        ]
+    # with a "/" prefix GNUInstallDirs prepends usr/ to every relative
+    # directory, including user-specified ones, so they must be absolute
+    return [
+        "-DCMAKE_INSTALL_LIBDIR=/lib",
+        "-DCMAKE_INSTALL_LIBEXECDIR=/lib",
+        "-DCMAKE_INSTALL_SBINDIR=/bin",
+        "-DCMAKE_INSTALL_BINDIR=/bin",
+        "-DCMAKE_INSTALL_INCLUDEDIR=/include",
+        "-DCMAKE_INSTALL_DATAROOTDIR=/share",
+    ]
 
 
 def configure(
@@ -100,17 +120,14 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
         "-Wno-dev",
         f"-DCMAKE_AUTOGEN_PARALLEL={min(pkg.make_jobs, 2)}",
         "-DCMAKE_BUILD_TYPE=None",
-        "-DCMAKE_INSTALL_PREFIX=/usr",
+        "-DCMAKE_INSTALL_PREFIX=" + layout.prefix(),
         "-DCMAKE_TLS_VERIFY=ON",
         "-DFETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS",
         "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
         "-DCMAKE_INSTALL_SYSCONFDIR=/etc",
         "-DCMAKE_INSTALL_RUNSTATEDIR=/run",
         "-DCMAKE_INSTALL_LOCALSTATEDIR=/var",
-        "-DCMAKE_INSTALL_LIBDIR=lib",
-        "-DCMAKE_INSTALL_LIBEXECDIR=lib",
-        "-DCMAKE_INSTALL_SBINDIR=bin",
-        "-DCMAKE_INSTALL_BINDIR=bin",
+        *_install_dirs(),
         "--fresh",
         *(extra_args or []),
         cdir,

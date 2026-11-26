@@ -1,3 +1,6 @@
+from cbuild.core import layout
+
+
 def _lint_static_cfi(pkg):
     if pkg.rparent.has_hardening("cfi") and not pkg.options["ltostrip"]:
         pkg.log_red("CFI enabled on a template with static libraries")
@@ -32,7 +35,10 @@ def _lint_license(pkg):
     lpath = pkg.destdir / "usr/share/licenses"
     if not lpath.is_dir():
         # the license may have been split into docpkg
-        lpath = pkg.destdir.parent / f"{pkg.pkgname}-doc/usr/share/licenses"
+        lpath = (
+            layout.DestPath(pkg.destdir.parent / f"{pkg.pkgname}-doc")
+            / "usr/share/licenses"
+        )
     if lpath.is_dir():
         for f in lpath.iterdir():
             has_license = True
@@ -159,11 +165,21 @@ def invoke(pkg):
     lintfail = False
     dirempty = True
 
-    allowpaths = {
-        "boot": True,
-        "etc": True,
-        "usr": True,
-    }
+    if layout.merged():
+        allowpaths = {
+            "bin": True,
+            "boot": True,
+            "etc": True,
+            "include": True,
+            "lib": True,
+            "share": True,
+        }
+    else:
+        allowpaths = {
+            "boot": True,
+            "etc": True,
+            "usr": True,
+        }
 
     # toplevel must only contain allowed paths
     # additionally, it must only contain directories
@@ -211,8 +227,11 @@ def invoke(pkg):
         "tests",
         "usr",
     ]:
+        # with no /usr, etc is a legitimate toplevel directory
+        if layout.merged() and d == "etc":
+            continue
         if (pkg.destdir / "usr" / d).exists():
-            pkg.log_red(f"forbidden path '/usr/{d}'")
+            pkg.log_red(f"forbidden path '{layout.path(d)}'")
             lintfail = True
 
     if (

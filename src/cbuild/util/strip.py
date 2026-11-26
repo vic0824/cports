@@ -1,6 +1,8 @@
 import re
 import shlex
 
+from cbuild.core import layout
+
 
 def strip_attach(pkg, strip_list, no_split=None):
     do_split = pkg.rparent.options["debug"] and pkg.rparent.build_dbg
@@ -40,6 +42,7 @@ def strip_attach(pkg, strip_list, no_split=None):
         "-C",
         str(pkg.chroot_destdir),
         "all",
+        env={"CBUILD_DEBUG_DIR": layout.path("lib/debug")},
     )
 
     # remove the leftover makefile

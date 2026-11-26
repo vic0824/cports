@@ -1,3 +1,4 @@
+from cbuild.core import layout
 from cbuild.util import make
 
 
@@ -8,7 +9,7 @@ def build(self):
 
     # by default, pass various stuff directly rather than through env
     tool_args = [
-        "PREFIX=/usr",
+        "PREFIX=" + layout.path(),
         "PKG_CONFIG=" + self.get_tool("PKG_CONFIG"),
         "OBJCOPY=" + self.get_tool("OBJCOPY"),
         "READELF=" + self.get_tool("READELF"),
@@ -37,7 +38,7 @@ def check(self):
 
 
 def install(self):
-    self.make.install(["STRIP=true", "PREFIX=/usr"])
+    self.make.install(["STRIP=true", "PREFIX=" + layout.path()])
 
 
 def use(tmpl):
