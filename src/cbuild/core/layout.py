@@ -41,6 +41,7 @@ ETC_DIRS = (
     "dinit.d",
     "modprobe.d",
     "modules-load.d",
+    "profile.d",
     "sysctl.d",
     "sysusers.d",
     "tmpfiles.d",
