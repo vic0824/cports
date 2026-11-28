@@ -135,7 +135,7 @@ def build(self):
 
 
 def pre_install(self):
-    from cbuild.core import layout
+    from cbuild.util import layout
 
     self.install_dir("usr/lib")
     # ensure all files go in /usr/lib; with no /usr syslibdir is libdir
@@ -146,7 +146,7 @@ def pre_install(self):
 
 
 def post_install(self):
-    from cbuild.core import layout
+    from cbuild.util import layout
 
     # no need for the symlink anymore
     if not layout.merged():

@@ -24,7 +24,7 @@ options = ["etcfiles", "!check", "bootstrap", "keepempty", "brokenlinks"]
 
 
 def install(self):
-    from cbuild.core import layout
+    from cbuild.util import layout
 
     if layout.merged():
         _install_nonux(self)
