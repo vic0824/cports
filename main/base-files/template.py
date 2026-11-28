@@ -24,6 +24,12 @@ options = ["etcfiles", "!check", "bootstrap", "keepempty", "brokenlinks"]
 
 
 def install(self):
+    from cbuild.core import layout
+
+    if layout.merged():
+        _install_nonux(self)
+        return
+
     # base root dirs
     for d in [
         "boot",
@@ -126,5 +132,129 @@ def install(self):
         self.install_file(
             self.sources_path / f"{f}-{_netbase_ver}",
             "usr/share/netbase",
+            name=f,
+        )
+
+
+# Nonux: no /usr, and none of the compatibility symlinks (docs/hier.md in
+# the Nonux repository). Kept apart from install() above so that the /usr
+# layout is built exactly as before.
+
+
+def _nonux_text(self, src, drop=(), subst=()):
+    # the shared files are written for /usr; translate them instead of
+    # keeping a second copy that would drift at every sync
+    lines = []
+    for ln in src.read_text().splitlines(keepends=True):
+        if any(d in ln for d in drop):
+            continue
+        for a, b in subst:
+            ln = ln.replace(a, b)
+        lines.append(ln.replace("/usr/", "/"))
+    out = self.cwd / "nonux" / src.name
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("".join(lines))
+    return out
+
+
+def _install_nonux(self):
+    # forbidden, also as symlinks: /usr, /usr/local, /sbin, /lib64, /lib32,
+    # /libexec, /opt, /media, /srv, /var/run, /var/lock, /var/tmp
+    for d in [
+        "bin",
+        "boot",
+        "dev",
+        "etc",
+        "home",
+        "include",
+        "lib",
+        "mnt",
+        "proc",
+        "run",
+        "share",
+        "sys",
+    ]:
+        self.install_dir(d)
+
+    # apk exec dir
+    self.install_dir("lib/apk/exec")
+
+    # mandirs
+    for i in range(1, 8):
+        self.install_dir("share/man/man" + str(i))
+
+    # root's home dir
+    self.install_dir("root")
+    (self.destdir / "root").chmod(0o750)
+
+    # /tmp
+    self.install_dir("tmp")
+    (self.destdir / "tmp").chmod(0o777)
+
+    fp = self.files_path
+
+    # Users and tmpfiles; the .d directories are in /etc (D-18)
+    self.install_sysusers(fp / "sysusers.conf")
+    self.install_tmpfiles(_nonux_text(self, fp / "tmpfiles.conf"))
+    self.install_tmpfiles(
+        _nonux_text(self, fp / "tmp.conf", drop=["/var/tmp"]), name="tmp"
+    )
+    self.install_tmpfiles(
+        _nonux_text(self, fp / "var.conf", drop=["/var/lock", "/var/run"]),
+        name="var",
+    )
+
+    self.install_file(fp / "etc/group", "etc")
+    self.install_file(_nonux_text(self, fp / "etc/passwd"), "etc")
+
+    # Mutable files not to be tracked by apk
+    for f in [
+        "fstab",
+        "hosts",
+        "issue",
+        "nsswitch.conf",
+    ]:
+        self.install_file(fp / "share" / f, "share/base-files")
+    self.install_file(
+        _nonux_text(
+            self,
+            fp / "share/profile",
+            subst=[(" /usr/lib/profile.d", "")],
+        ),
+        "share/base-files",
+    )
+    self.install_file(
+        self.template_path / "files-nonux/profile.path", "share/base-files"
+    )
+
+    self.install_file(fp / "share/securetty", "share/pam", mode=0o600)
+
+    # Files that should not be changed
+    for f in [
+        "chimera-release",
+        "os-release",
+    ]:
+        self.install_file(fp / "lib" / f, "lib")
+
+    # Systemwide profile snippets: a single place, /etc/profile.d
+    for f in (fp / "profile.d").glob("*.sh"):
+        self.install_file(f, "etc/profile.d")
+
+    # Install common licenses
+    self.install_dir("share/licenses")
+
+    for f in (fp / "licenses").iterdir():
+        self.install_file(f, "share/licenses")
+
+    self.install_bin(fp / "lsb_release")
+
+    # files from debian netbase
+    for f in [
+        "protocols",
+        "services",
+    ]:
+        self.install_file(
+            self.sources_path / f"{f}-{_netbase_ver}",
+            "share/netbase",
             name=f,
         )

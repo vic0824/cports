@@ -4,7 +4,8 @@ pkgrel = 4
 _commit = "9fa28ece75d8a2191de7c5bb53bed224c5947417"
 _mimalloc_ver = "2.2.7"
 build_style = "gnu_configure"
-_configure_base = ["--prefix=/usr", "--disable-gcc-wrapper"]
+# the prefix and libdir come from gnu_configure, which follows the layout
+_configure_base = ["--disable-gcc-wrapper"]
 configure_args = [*_configure_base]
 configure_gen = []
 make_build_args = []
@@ -134,16 +135,22 @@ def build(self):
 
 
 def pre_install(self):
+    from cbuild.core import layout
+
     self.install_dir("usr/lib")
-    # ensure all files go in /usr/lib
-    self.install_link("lib", "usr/lib")
+    # ensure all files go in /usr/lib; with no /usr syslibdir is libdir
+    if not layout.merged():
+        self.install_link("lib", "usr/lib")
 
     self.install_license("COPYRIGHT")
 
 
 def post_install(self):
+    from cbuild.core import layout
+
     # no need for the symlink anymore
-    self.uninstall("lib")
+    if not layout.merged():
+        self.uninstall("lib")
 
     # install variants
     if _variant_mng:

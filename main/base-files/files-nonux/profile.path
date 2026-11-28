@@ -1,0 +1,45 @@
+# /etc/profile.path
+#
+# Handles filtering and fixup of the user's PATH variable
+#
+# Nonux has a single directory for executables, /bin: /usr/bin, /sbin and the
+# /usr/local ones do not exist (docs/hier.md). Drop them from the PATH that
+# came in, keep every other component in its place, and make sure /bin is
+# there.
+#
+# We do not want to replace the PATH; in environments like WSL it needs to be
+# preserved for most part, and elsewhere we rely on the defaults given to us
+# by the shell, ssh, login(1) and others.
+#
+
+_OLD_IFS="$IFS"
+IFS=":"
+
+_HAVE_BIN=
+
+for p in $PATH; do
+    case "$p" in
+        /bin|/sbin|/usr/bin|/usr/sbin|/usr/local/bin|/usr/local/sbin)
+            if [ -z "$_HAVE_BIN" ]; then
+                _NEW_PATH="$_NEW_PATH:/bin"
+                _HAVE_BIN=1
+            fi
+            ;;
+        *)
+            _NEW_PATH="$_NEW_PATH:$p"
+            ;;
+    esac
+done
+unset p
+
+IFS="$_OLD_IFS"
+
+if [ -z "$_HAVE_BIN" ]; then
+    _NEW_PATH="$_NEW_PATH:/bin"
+fi
+
+export PATH="${_NEW_PATH#:}"
+
+unset _HAVE_BIN
+unset _NEW_PATH
+unset _OLD_IFS

@@ -1222,6 +1222,7 @@ class Template(Package):
         # paths that can be used by template methods
         self.files_path = self.template_path / "files"
         self.patches_path = self.template_path / "patches"
+        self.patches_nonux_path = self.template_path / "patches-nonux"
         self.sources_path = paths.sources() / f"{self.pkgname}-{self.pkgver}"
         self.bldroot_path = paths.bldroot()
         self.statedir = bdirbase / f"{self.pkgname}-{self.pkgver}"
